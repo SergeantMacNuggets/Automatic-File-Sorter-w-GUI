@@ -17,15 +17,19 @@ class NorthPanel extends JPanel {
         fileFormat.setPreferredSize(new Dimension(200,5));
         location.setPreferredSize(new Dimension(200,5));
         left.setLayout(new GridLayout(5,1));
+        right.setLayout(new GridLayout(2,3,10,10));
         left.add(new JLabel("File Format"));
         left.add(fileFormat);
         left.add(new JLabel("Destination"));
         left.add(location);
+        right.add(new JButton("Button1"));
+        right.add(new JButton("Button2"));
+        right.add(new JButton("Button3"));
+        right.add(new JButton("Button4"));
+        right.add(new JButton("Button5"));
+        right.add(new JButton("Button6"));
         add(left);
         add(right);
-
-
-
     }
 }
 
