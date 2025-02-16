@@ -11,15 +11,21 @@ class NorthPanel extends JPanel {
     }
     private JPanel getLeftPanel() {
         JPanel left = new JPanel();
+        JPanel temp = new JPanel();
+        JButton choose = new JButton("...");
         JTextField fileFormat = new JTextField();
         JTextField location = new JTextField();
         fileFormat.setPreferredSize(new Dimension(200,5));
-        location.setPreferredSize(new Dimension(200,5));
+        location.setPreferredSize(new Dimension(330,5));
+        choose.setPreferredSize(new Dimension(30,5));
         left.setLayout(new GridLayout(5,1));
+        temp.setLayout(new BorderLayout());
         left.add(new JLabel("File Format"));
         left.add(fileFormat);
         left.add(new JLabel("Destination"));
-        left.add(location);
+        temp.add(location,BorderLayout.WEST);
+        temp.add(choose,BorderLayout.EAST);
+        left.add(temp);
         return left;
     }
 
@@ -56,8 +62,8 @@ class SouthPanel extends JPanel {
 
 class LeftPanel extends JPanel {
     LeftPanel() {
-        String week[]= { "Monday","Tuesday","Wednesday",
-                "Thursday","Friday","Saturday","Sunday"};
+        String week[]= { ".mp4",".png",".docx",
+                ".jpeg",".pptx",".java",".cpp"};
         JList<String> list = new JList<>(week);
         list.setPreferredSize(new Dimension(330,600));
         list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -84,8 +90,8 @@ class LeftPanel extends JPanel {
 
 class RightPanel extends JPanel {
     RightPanel() {
-        String week[]= { "Monday","Tuesday","Wednesday",
-                "Thursday","Friday","Saturday","Sunday"};
+        String week[]= { "D:/Videos","D:/Pictures","C:/Documents/Word",
+                "D:/Pictures","C:/Documents/Powerpoint","C:/Codes/Java","C:/Codes/C++"};
         JList<String> list = new JList<>(week);
         list.setPreferredSize(new Dimension(330,600));
         list.setCellRenderer(getRenderer());
