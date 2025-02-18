@@ -3,7 +3,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+
 
 class NorthPanel extends JPanel {
     JTextField fileFormat, location;
@@ -133,11 +133,9 @@ class SouthPanel extends JPanel {
 }
 
 class LeftPanel extends JPanel {
-    ArrayList<String> files;
     JList<String> list;
     DefaultListModel<String> listD;
     LeftPanel() {
-        files = new ArrayList<>();
         listD = new DefaultListModel<>();
         list = new JList<>(listD);
         list.setPreferredSize(new Dimension(330,600));
@@ -148,7 +146,6 @@ class LeftPanel extends JPanel {
     }
     public void setList(String s) {
         listD.addElement(s);
-        files.add(s);
     }
 
     public JList<String> getList() {
@@ -172,11 +169,9 @@ class LeftPanel extends JPanel {
 }
 
 class RightPanel extends JPanel {
-    ArrayList<String> files;
     JList<String> list;
     DefaultListModel<String> listD;
     RightPanel() {
-        files = new ArrayList<>();
         listD = new DefaultListModel<>();
         list = new JList<>(listD);
         list.setPreferredSize(new Dimension(330,600));
@@ -188,7 +183,6 @@ class RightPanel extends JPanel {
 
     public void setList(String s) {
         listD.addElement(s);
-        files.add(s);
     }
 
     public JList<String> getList() {
@@ -265,12 +259,14 @@ class Window extends JFrame {
     LeftPanel leftPanel;
     RightPanel rightPanel;
     CenterPanel centerPanel;
+    Data data;
     Window() {
         northPanel = new NorthPanel();
         southPanel = new SouthPanel();
         leftPanel = new LeftPanel();
         rightPanel = new RightPanel();
         centerPanel = new CenterPanel();
+        data = new Data();
         setSize(800,500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("File Sorter");
@@ -288,6 +284,8 @@ class Window extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(t1.getText().isEmpty() || t2.getText().isEmpty()) return;
+                data.setMap(t1.getText(), t2.getText());
+                data.printMap();
                 leftPanel.setList(t1.getText());
                 rightPanel.setList(t2.getText());
                 t1.setText("");
@@ -307,6 +305,8 @@ class Window extends JFrame {
                     DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
                     int index = tempLeft.getSelectedIndex();
                     if(index != -1) {
+                        data.removeData(modelLeft.get(index));
+                        data.printMap();
                         modelLeft.remove(index);
                         modelRight.remove(index);
                     }
