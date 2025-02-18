@@ -54,10 +54,16 @@ class NorthPanel extends JPanel {
     private JPanel getRightPanel() {
         JPanel right = new JPanel();
         JPanel p1 = new JPanel();
+        JPanel temp = new JPanel();
         JButton save = new JButton("Save");
         JButton load = new JButton("Load");
+        JButton choose = new JButton("...");
         JTextField location = new JTextField();
         location.setEnabled(false);
+        choose.setEnabled(false);
+        temp.setLayout(new BorderLayout());
+        location.setPreferredSize(new Dimension(330,5));
+        choose.setPreferredSize(new Dimension(30,5));
         ButtonGroup groupRadio = new ButtonGroup();
         JCheckBox specificLoc = new JCheckBox("Specified Location");
         specificLoc.addActionListener(new ActionListener() {
@@ -66,13 +72,24 @@ class NorthPanel extends JPanel {
                 JCheckBox temp = (JCheckBox) e.getSource();
                 if(temp.isSelected()) {
                     location.setEnabled(true);
+                    choose.setEnabled(true);
                 }
                 else {
                     location.setEnabled(false);
+                    choose.setEnabled(false);
                 }
             }
         });
-
+        choose.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                if(chooser.showOpenDialog(null) == 0) {
+                    location.setText(chooser.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
         save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -90,14 +107,17 @@ class NorthPanel extends JPanel {
         });
         JRadioButton file = new JRadioButton("File");
         JRadioButton date = new JRadioButton("Date");
+        file.setSelected(true);
         right.setLayout(new GridLayout(5,1));
+        temp.add(location,BorderLayout.WEST);
+        temp.add(choose,BorderLayout.EAST);
         p1.setLayout(new GridLayout(1,3,20,0));
-        p1.add(file);
+        p1.add(date);
         p1.add(save);
         p1.add(load);
         right.add(specificLoc);
-        right.add(location);
-        right.add(date);
+        right.add(temp);
+        right.add(file);
         right.add(p1);
         groupRadio.add(file);
         groupRadio.add(date);
@@ -108,7 +128,6 @@ class NorthPanel extends JPanel {
 class SouthPanel extends JPanel {
     SouthPanel() {
         setPreferredSize(new Dimension(100,30));
-//        setBorder(BorderFactory.createMatteBorder(1,0,0,0,Color.lightGray));
         add(new JLabel("All rights reserved©"));
     }
 }
@@ -188,8 +207,6 @@ class RightPanel extends JPanel {
             }
         };
     }
-
-
 }
 
 class CenterPanel extends JPanel {
@@ -270,6 +287,7 @@ class Window extends JFrame {
         b1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if(t1.getText().isEmpty() || t2.getText().isEmpty()) return;
                 leftPanel.setList(t1.getText());
                 rightPanel.setList(t2.getText());
                 t1.setText("");
@@ -312,6 +330,7 @@ class Window extends JFrame {
     private JPanel getMain() {
         JPanel main = new JPanel();
         Border padding = BorderFactory.createEmptyBorder(5,5,0,5);
+        setIconImage(new ImageIcon("src/icon.png").getImage());
         main.setBorder(padding);
         main.setLayout(new BorderLayout());
         main.add(northPanel,BorderLayout.NORTH);
