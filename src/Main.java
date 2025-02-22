@@ -6,7 +6,8 @@ import java.awt.event.ActionListener;
 
 
 class NorthPanel extends JPanel {
-    JTextField fileFormat, location;
+    JTextField fileFormat, location, specificLocation;
+    JCheckBox specificLoc;
     NorthPanel() {
         setLayout(new GridLayout(1,2,50,0));
         setPreferredSize(new Dimension(100,120));
@@ -47,8 +48,13 @@ class NorthPanel extends JPanel {
         return switch(name) {
             case "file" -> fileFormat;
             case "location" -> location;
+            case "specific" -> specificLocation;
             default -> null;
         };
+    }
+
+    public boolean isTrue() {
+        return specificLoc.isSelected();
     }
 
     private JPanel getRightPanel() {
@@ -58,24 +64,24 @@ class NorthPanel extends JPanel {
         JButton save = new JButton("Save");
         JButton load = new JButton("Load");
         JButton choose = new JButton("...");
-        JTextField location = new JTextField();
-        location.setEnabled(false);
+        specificLocation = new JTextField();
+        specificLocation.setEnabled(false);
         choose.setEnabled(false);
         temp.setLayout(new BorderLayout());
-        location.setPreferredSize(new Dimension(330,5));
+        specificLocation.setPreferredSize(new Dimension(330,5));
         choose.setPreferredSize(new Dimension(30,5));
         ButtonGroup groupRadio = new ButtonGroup();
-        JCheckBox specificLoc = new JCheckBox("Specified Location");
+        specificLoc = new JCheckBox("Specified Location");
         specificLoc.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JCheckBox temp = (JCheckBox) e.getSource();
                 if(temp.isSelected()) {
-                    location.setEnabled(true);
+                    specificLocation.setEnabled(true);
                     choose.setEnabled(true);
                 }
                 else {
-                    location.setEnabled(false);
+                    specificLocation.setEnabled(false);
                     choose.setEnabled(false);
                 }
             }
@@ -86,7 +92,7 @@ class NorthPanel extends JPanel {
                 JFileChooser chooser = new JFileChooser();
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 if(chooser.showOpenDialog(null) == 0) {
-                    location.setText(chooser.getSelectedFile().getAbsolutePath());
+                    specificLocation.setText(chooser.getSelectedFile().getAbsolutePath());
                 }
             }
         });
@@ -109,7 +115,7 @@ class NorthPanel extends JPanel {
         JRadioButton date = new JRadioButton("Date");
         file.setSelected(true);
         right.setLayout(new GridLayout(5,1));
-        temp.add(location,BorderLayout.WEST);
+        temp.add(specificLocation,BorderLayout.WEST);
         temp.add(choose,BorderLayout.EAST);
         p1.setLayout(new GridLayout(1,3,20,0));
         p1.add(date);
@@ -267,11 +273,13 @@ class Window extends JFrame {
         rightPanel = new RightPanel();
         centerPanel = new CenterPanel();
         data = new Data();
+        JTextField[] textFields = {northPanel.getTextField("file"),northPanel.getTextField("location")
+                ,northPanel.getTextField("specific")};
         setSize(800,500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("File Sorter");
         add(getMain());
-        clickListener(centerPanel.getButton("add"),northPanel.getTextField("file"),northPanel.getTextField("location"));
+        clickListener(centerPanel.getButton("add"), textFields);
         clickListener(centerPanel.getButton("remove"));
         clickListener(centerPanel.getButton("clear"));
         this.setContentPane(getMain());
@@ -279,17 +287,19 @@ class Window extends JFrame {
         setVisible(true);
     }
 
-    private void clickListener(JButton b1,JTextField t1,JTextField t2) {
+    private void clickListener(JButton b1,JTextField[] t) {
         b1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(t1.getText().isEmpty() || t2.getText().isEmpty()) return;
-                data.setMap(t1.getText(), t2.getText());
-                data.printMap();
-                leftPanel.setList(t1.getText());
-                rightPanel.setList(t2.getText());
-                t1.setText("");
-                t2.setText("");
+                String specificFile = (northPanel.isTrue()) ? t[0].getText() + " $" + t[2].getText(): t[0].getText();
+                if(t[0].getText().isEmpty() || t[1].getText().isEmpty()
+                        || (northPanel.isTrue() && t[2].getText().isEmpty())) return;
+                data.setMap(specificFile, t[1].getText());
+                leftPanel.setList(specificFile);
+                rightPanel.setList(t[1].getText());
+                for(JTextField text: t) {
+                    text.setText("");
+                }
             }
         });
     }
