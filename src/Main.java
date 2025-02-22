@@ -3,11 +3,14 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 
-class NorthPanel extends JPanel {
-    JTextField fileFormat, location, specificLocation;
+class NorthPanel extends JPanel implements ItemListener {
+    JTextField fileFormat, location, specificLocation,dateText;
     JCheckBox specificLoc;
+    boolean radioState=false;
     NorthPanel() {
         setLayout(new GridLayout(1,2,50,0));
         setPreferredSize(new Dimension(100,120));
@@ -49,6 +52,7 @@ class NorthPanel extends JPanel {
             case "file" -> fileFormat;
             case "location" -> location;
             case "specific" -> specificLocation;
+            case "date" -> dateText;
             default -> null;
         };
     }
@@ -57,13 +61,17 @@ class NorthPanel extends JPanel {
         return specificLoc.isSelected();
     }
 
+
     private JPanel getRightPanel() {
         JPanel right = new JPanel();
         JPanel p1 = new JPanel();
+        JPanel datePanel = new JPanel(new GridLayout(1,2));
         JPanel temp = new JPanel();
         JButton save = new JButton("Save");
         JButton load = new JButton("Load");
         JButton choose = new JButton("...");
+        dateText = new JTextField();
+        dateText.setEnabled(false);
         specificLocation = new JTextField();
         specificLocation.setEnabled(false);
         choose.setEnabled(false);
@@ -113,12 +121,15 @@ class NorthPanel extends JPanel {
         });
         JRadioButton file = new JRadioButton("File");
         JRadioButton date = new JRadioButton("Date");
+        date.addItemListener(this::itemStateChanged);
         file.setSelected(true);
         right.setLayout(new GridLayout(5,1));
         temp.add(specificLocation,BorderLayout.WEST);
         temp.add(choose,BorderLayout.EAST);
-        p1.setLayout(new GridLayout(1,3,20,0));
-        p1.add(date);
+        p1.setLayout(new GridLayout(1,3,15,0));
+        datePanel.add(date);
+        datePanel.add(dateText);
+        p1.add(datePanel);
         p1.add(save);
         p1.add(load);
         right.add(specificLoc);
@@ -128,6 +139,21 @@ class NorthPanel extends JPanel {
         groupRadio.add(file);
         groupRadio.add(date);
         return right;
+    }
+
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            dateText.setEnabled(true);
+            radioState = true;
+        }
+        else if (e.getStateChange() == ItemEvent.DESELECTED) {
+            dateText.setEnabled(false);
+            radioState = false;
+        }
+    }
+    public boolean isRadioTrue() {
+        return radioState;
     }
 }
 
@@ -274,7 +300,7 @@ class Window extends JFrame {
         centerPanel = new CenterPanel();
         data = new Data();
         JTextField[] textFields = {northPanel.getTextField("file"),northPanel.getTextField("location")
-                ,northPanel.getTextField("specific")};
+                ,northPanel.getTextField("specific"), northPanel.getTextField("date")};
         setSize(800,500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("File Sorter");
@@ -291,9 +317,14 @@ class Window extends JFrame {
         b1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String specificFile = (northPanel.isTrue()) ? t[0].getText() + " $" + t[2].getText(): t[0].getText();
+                String specificFile;
+                if(northPanel.isRadioTrue() && northPanel.isTrue()) specificFile = t[0].getText() + " " + t[3].getText() + " $" + t[2].getText();
+                else if(northPanel.isTrue()) specificFile = t[0].getText() + " $" + t[2].getText();
+                else if(northPanel.isRadioTrue()) specificFile = t[0].getText() + " " + t[3].getText();
+                else specificFile = t[0].getText();
                 if(t[0].getText().isEmpty() || t[1].getText().isEmpty()
-                        || (northPanel.isTrue() && t[2].getText().isEmpty())) return;
+                        || (northPanel.isTrue() && t[2].getText().isEmpty())
+                        || (northPanel.isRadioTrue() && t[3].getText().isEmpty())) return;
                 data.setMap(specificFile, t[1].getText());
                 leftPanel.setList(specificFile);
                 rightPanel.setList(t[1].getText());
