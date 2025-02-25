@@ -92,7 +92,7 @@ public class Window extends JFrame {
     private JPanel getMain() {
         JPanel main = new JPanel();
         Border padding = BorderFactory.createEmptyBorder(5,5,0,5);
-        setIconImage(new ImageIcon("src/icon.png").getImage());
+        setIconImage(new ImageIcon("src/res/icon.png").getImage());
         main.setBorder(padding);
         main.setLayout(new BorderLayout());
         main.add(northPanel,BorderLayout.NORTH);
