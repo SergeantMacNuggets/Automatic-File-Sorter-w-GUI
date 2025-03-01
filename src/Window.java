@@ -80,7 +80,7 @@ public class Window extends JFrame {
                 }
             });
         }
-        else if(b1.getText().equals("Reset")) {
+        else if(b1.getText().equals("Clear")) {
             b1.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
