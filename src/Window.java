@@ -5,7 +5,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 
+
+
+//Window nga musdisplay output sa OS
 public class Window extends JFrame {
     NorthPanel northPanel;
     SouthPanel southPanel;
@@ -34,6 +38,7 @@ public class Window extends JFrame {
         setVisible(true);
     }
 
+    //clickListener to accept JTextField gikan sa NorthPanel padulong left ug right panel
     private void clickListener(JButton b1,JTextField[] t) {
         b1.addActionListener(new ActionListener() {
             @Override
@@ -114,33 +119,27 @@ class NorthPanel extends JPanel implements ItemListener {
         add(getLeftPanel());
         add(getRightPanel());
     }
+
+    private JPanel inTextLocation(JTextField t, JButton b) {
+        JPanel p = new JPanel(new BorderLayout());
+        t.setPreferredSize(new Dimension(330,5));
+        b.setPreferredSize(new Dimension(30,5));
+        b.addActionListener(getFilePath(t));
+        p.add(t, BorderLayout.WEST);
+        p.add(b, BorderLayout.EAST);
+        return p;
+    }
+
     private JPanel getLeftPanel() {
         JPanel left = new JPanel();
-        JPanel temp = new JPanel();
-        JButton choose = new JButton("...");
         fileFormat = new JTextField();
         location = new JTextField();
+        Component[] components = {new JLabel("File Format"),
+                fileFormat, new JLabel("Destination"), inTextLocation(location, new JButton("..."))};
         fileFormat.setPreferredSize(new Dimension(200,5));
-        location.setPreferredSize(new Dimension(330,5));
-        choose.setPreferredSize(new Dimension(30,5));
         left.setLayout(new GridLayout(5,1));
-        temp.setLayout(new BorderLayout());
-        choose.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                if(chooser.showOpenDialog(null) == 0) {
-                    location.setText(chooser.getSelectedFile().getAbsolutePath());
-                }
-            }
-        });
-        left.add(new JLabel("File Format"));
-        left.add(fileFormat);
-        left.add(new JLabel("Destination"));
-        temp.add(location,BorderLayout.WEST);
-        temp.add(choose,BorderLayout.EAST);
-        left.add(temp);
+        for(Component c: components)
+            left.add(c);
         return left;
     }
 
@@ -158,8 +157,6 @@ class NorthPanel extends JPanel implements ItemListener {
         return specificLoc.isSelected();
     }
 
-
-
     private JPanel getRightPanel() {
         JPanel right = new JPanel();
         JPanel p1 = new JPanel();
@@ -174,8 +171,6 @@ class NorthPanel extends JPanel implements ItemListener {
         specificLocation.setEnabled(false);
         choose.setEnabled(false);
         temp.setLayout(new BorderLayout());
-        specificLocation.setPreferredSize(new Dimension(330,5));
-        choose.setPreferredSize(new Dimension(30,5));
         ButtonGroup groupRadio = new ButtonGroup();
         specificLoc = new JCheckBox("Specified Location");
         specificLoc.addActionListener(new ActionListener() {
@@ -192,38 +187,13 @@ class NorthPanel extends JPanel implements ItemListener {
                 }
             }
         });
-        choose.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                if(chooser.showOpenDialog(null) == 0) {
-                    specificLocation.setText(chooser.getSelectedFile().getAbsolutePath());
-                }
-            }
-        });
-        save.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.showOpenDialog(null);
-            }
-        });
-
-        load.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.showOpenDialog(null);
-            }
-        });
+        save.addActionListener(openFile());
+        load.addActionListener(openFile());
         JRadioButton file = new JRadioButton("File");
         JRadioButton date = new JRadioButton("Date");
         date.addItemListener(this::itemStateChanged);
         file.setSelected(true);
         right.setLayout(new GridLayout(5,1));
-        temp.add(specificLocation,BorderLayout.WEST);
-        temp.add(choose,BorderLayout.EAST);
         p1.setLayout(new GridLayout(1,3,15,0));
         datePanel.add(date);
         datePanel.add(dateText);
@@ -231,12 +201,35 @@ class NorthPanel extends JPanel implements ItemListener {
         p1.add(save);
         p1.add(load);
         right.add(specificLoc);
-        right.add(temp);
+        right.add(inTextLocation(specificLocation,choose));
         right.add(file);
         right.add(p1);
         groupRadio.add(file);
         groupRadio.add(date);
         return right;
+    }
+
+    private ActionListener getFilePath(JTextField t) {
+        return new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                if(chooser.showOpenDialog(null) == 0) {
+                    t.setText(chooser.getSelectedFile().getAbsolutePath());
+                }
+            }
+        };
+    }
+
+    private ActionListener openFile() {
+        return new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.showOpenDialog(null);
+            }
+        };
     }
 
     @Override
@@ -274,6 +267,7 @@ class LeftPanel extends JPanel {
         list.setBorder(BorderFactory.createMatteBorder(1,1,1,1,Color.lightGray));
         add(list);
     }
+
     public void setList(String s) {
         listD.addElement(s);
     }
@@ -281,7 +275,6 @@ class LeftPanel extends JPanel {
     public JList<String> getList() {
         return list;
     }
-
 
     private ListCellRenderer<? super String> getRenderer() {
         return new DefaultListCellRenderer() {
@@ -334,17 +327,12 @@ class RightPanel extends JPanel {
 }
 
 class CenterPanel extends JPanel {
-    JButton addButton,removeButton,removeAll,sort;
+    JButton[] buttons = {createButton("Add"),createButton("Remove"),
+            createButton("Clear"),createButton("Sort")};
     CenterPanel() {
-        addButton = createButton("Add");
-        removeButton = createButton("Remove");
-        removeAll = createButton("Reset");
-        sort = createButton("Sort");
-        setLayout(new GridLayout(3,1,0,10));
+        setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         setPreferredSize(new Dimension(100,600));
-        add(getPanel(addButton));
-        add(getPanel(removeButton,removeAll));
-        add(getPanel("",sort));
+        for (JButton b: buttons) add(getPanel(b));
     }
 
     private JButton createButton(String s) {
@@ -355,29 +343,16 @@ class CenterPanel extends JPanel {
 
     public JButton getButton(String name) {
         return switch (name) {
-            case "add" -> addButton;
-            case "remove" -> removeButton;
-            case "clear" -> removeAll;
-            case "sort" -> sort;
+            case "add" -> buttons[0];
+            case "remove" -> buttons[1];
+            case "clear" -> buttons[2];
+            case "sort" -> buttons[3];
             default -> null;
         };
     }
 
     private JPanel getPanel(JButton b1) {
         JPanel p1=new JPanel();
-        p1.add(b1);
-        return p1;
-    }
-    private JPanel getPanel(JButton b1,JButton b2) {
-        JPanel p1 = new JPanel();
-        p1.add(b1);
-        p1.add(b2);
-        return p1;
-    }
-    private JPanel getPanel(String l1,JButton b1) {
-        JPanel p1 = new JPanel();
-        p1.setLayout(new GridLayout(2,1));
-        p1.add(new JLabel(l1));
         p1.add(b1);
         return p1;
     }
