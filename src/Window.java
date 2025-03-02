@@ -5,8 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-
 
 
 //Window nga musdisplay output sa OS
@@ -24,33 +22,35 @@ public class Window extends JFrame {
         rightPanel = new RightPanel();
         centerPanel = new CenterPanel();
         data = new Data();
-        JTextField[] textFields = {northPanel.getTextField("file"),northPanel.getTextField("location")
-                ,northPanel.getTextField("specific"), northPanel.getTextField("date")};
+        JButton[] b = {centerPanel.getButton("add"),centerPanel.getButton("remove"),
+                centerPanel.getButton("clear")};
         setSize(800,500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("File Sorter");
         add(getMain());
-        clickListener(centerPanel.getButton("add"), textFields);
-        clickListener(centerPanel.getButton("remove"));
-        clickListener(centerPanel.getButton("clear"));
+        clickListener(b);
         this.setContentPane(getMain());
         setResizable(false);
         setVisible(true);
     }
 
-    //clickListener to accept JTextField gikan sa NorthPanel padulong left ug right panel
-    private void clickListener(JButton b1,JTextField[] t) {
-        b1.addActionListener(new ActionListener() {
+    private void clickListener(JButton[] b) {
+        JList<String> tempLeft = leftPanel.getList();
+        JList<String> tempRight = rightPanel.getList();
+        b[0].addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String specificFile;
-                if(northPanel.isRadioTrue() && northPanel.isTrue()) specificFile = t[0].getText() + " " + t[3].getText() + " $" + t[2].getText();
-                else if(northPanel.isTrue()) specificFile = t[0].getText() + " $" + t[2].getText();
-                else if(northPanel.isRadioTrue()) specificFile = t[0].getText() + " " + t[3].getText();
-                else specificFile = t[0].getText();
+                JTextField[] t = {northPanel.getTextField("file"),northPanel.getTextField("location")
+                        ,northPanel.getTextField("specific"), northPanel.getTextField("date")};
+                String specificFile=t[0].getText() + " ";
+                specificFile = specificFile.concat((northPanel.isRadioTrue()) ?
+                        t[3].getText()+ " " + (northPanel.isSpecificTrue() ?  t[2].getText() + " ": "")
+                        : northPanel.isSpecificTrue() ?  t[2].getText() + " ": "");
+
                 if(t[0].getText().isEmpty() || t[1].getText().isEmpty()
-                        || (northPanel.isTrue() && t[2].getText().isEmpty())
+                        || (northPanel.isSpecificTrue() && t[2].getText().isEmpty())
                         || (northPanel.isRadioTrue() && t[3].getText().isEmpty())) return;
+
                 data.setMap(specificFile, t[1].getText());
                 leftPanel.setList(specificFile);
                 rightPanel.setList(t[1].getText());
@@ -59,39 +59,29 @@ public class Window extends JFrame {
                 }
             }
         });
-    }
-
-    private void clickListener(JButton b1) {
-        JList<String> tempLeft = leftPanel.getList();
-        JList<String> tempRight = rightPanel.getList();
-        if(b1.getText().equals("Remove")) {
-            b1.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
-                    DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
-                    int index = tempLeft.getSelectedIndex();
-                    if(index != -1) {
-                        data.removeData(modelLeft.get(index));
-                        data.printMap();
-                        modelLeft.remove(index);
-                        modelRight.remove(index);
-                    }
+        b[1].addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
+                DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
+                int index = tempLeft.getSelectedIndex();
+                if(index != -1) {
+                    data.removeData(modelLeft.get(index));
+                    data.printMap();
+                    modelLeft.remove(index);
+                    modelRight.remove(index);
                 }
-            });
-        }
-        else if(b1.getText().equals("Clear")) {
-            b1.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
-                    DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
-                    modelLeft.removeAllElements();
-                    modelRight.removeAllElements();
-                }
-            });
-        }
-
+            }
+        });
+        b[2].addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
+                DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
+                modelLeft.removeAllElements();
+                modelRight.removeAllElements();
+            }
+        });
     }
 
     private JPanel getMain() {
@@ -153,7 +143,7 @@ class NorthPanel extends JPanel implements ItemListener {
         };
     }
 
-    public boolean isTrue() {
+    public boolean isSpecificTrue() {
         return specificLoc.isSelected();
     }
 
