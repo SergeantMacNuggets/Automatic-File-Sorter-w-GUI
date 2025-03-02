@@ -7,6 +7,20 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 
+enum Input {
+    FILE,
+    LOCATION,
+    SPECIFICLOCATION,
+    DATE
+}
+
+enum Button {
+    ADD,
+    REMOVE,
+    CLEAR,
+    SORT
+}
+
 //Window nga musdisplay output sa OS
 public class Window extends JFrame {
     NorthPanel northPanel;
@@ -14,22 +28,24 @@ public class Window extends JFrame {
     LeftPanel leftPanel;
     RightPanel rightPanel;
     CenterPanel centerPanel;
-    Data data;
     Window() {
         northPanel = new NorthPanel();
         southPanel = new SouthPanel();
         leftPanel = new LeftPanel();
         rightPanel = new RightPanel();
         centerPanel = new CenterPanel();
-        data = new Data();
-        JButton[] b = {centerPanel.getButton("add"),centerPanel.getButton("remove"),
-                centerPanel.getButton("clear")};
-        setSize(800,500);
+
+        JButton[] b = {centerPanel.getButton(Button.ADD),centerPanel.getButton(Button.REMOVE),
+                centerPanel.getButton(Button.CLEAR)};
+
+        setSize(800,550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("File Sorter");
+        setJMenuBar(new MenuBar());
         add(getMain());
         clickListener(b);
-        this.setContentPane(getMain());
+        setContentPane(getMain());
+        setLocationRelativeTo(null);
         setResizable(false);
         setVisible(true);
     }
@@ -40,9 +56,12 @@ public class Window extends JFrame {
         b[0].addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JTextField[] t = {northPanel.getTextField("file"),northPanel.getTextField("location")
-                        ,northPanel.getTextField("specific"), northPanel.getTextField("date")};
+
+                JTextField[] t = {northPanel.getTextField(Input.FILE),northPanel.getTextField(Input.LOCATION)
+                        ,northPanel.getTextField(Input.SPECIFICLOCATION), northPanel.getTextField(Input.DATE)};
+
                 String specificFile=t[0].getText() + " ";
+
                 specificFile = specificFile.concat((northPanel.isRadioTrue()) ?
                         t[3].getText()+ " " + (northPanel.isSpecificTrue() ?  t[2].getText() + " ": "")
                         : northPanel.isSpecificTrue() ?  t[2].getText() + " ": "");
@@ -51,7 +70,6 @@ public class Window extends JFrame {
                         || (northPanel.isSpecificTrue() && t[2].getText().isEmpty())
                         || (northPanel.isRadioTrue() && t[3].getText().isEmpty())) return;
 
-                data.setMap(specificFile, t[1].getText());
                 leftPanel.setList(specificFile);
                 rightPanel.setList(t[1].getText());
                 for(JTextField text: t) {
@@ -65,12 +83,12 @@ public class Window extends JFrame {
                 DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
                 DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
                 int index = tempLeft.getSelectedIndex();
+
                 if(index != -1) {
-                    data.removeData(modelLeft.get(index));
-                    data.printMap();
                     modelLeft.remove(index);
                     modelRight.remove(index);
                 }
+
             }
         });
         b[2].addActionListener(new ActionListener() {
@@ -86,7 +104,7 @@ public class Window extends JFrame {
 
     private JPanel getMain() {
         JPanel main = new JPanel();
-        Border padding = BorderFactory.createEmptyBorder(5,5,0,5);
+        Border padding = BorderFactory.createEmptyBorder(0,5,0,5);
         setIconImage(new ImageIcon("src/res/icon.png").getImage());
         main.setBorder(padding);
         main.setLayout(new BorderLayout());
@@ -103,9 +121,9 @@ class NorthPanel extends JPanel implements ItemListener {
     JTextField fileFormat, location, specificLocation,dateText;
     JCheckBox specificLoc;
     boolean radioState=false;
+
     NorthPanel() {
         setLayout(new GridLayout(1,2,50,0));
-        setPreferredSize(new Dimension(100,120));
         add(getLeftPanel());
         add(getRightPanel());
     }
@@ -115,6 +133,7 @@ class NorthPanel extends JPanel implements ItemListener {
         t.setPreferredSize(new Dimension(330,5));
         b.setPreferredSize(new Dimension(30,5));
         b.addActionListener(getFilePath(t));
+
         p.add(t, BorderLayout.WEST);
         p.add(b, BorderLayout.EAST);
         return p;
@@ -124,21 +143,25 @@ class NorthPanel extends JPanel implements ItemListener {
         JPanel left = new JPanel();
         fileFormat = new JTextField();
         location = new JTextField();
+
         Component[] components = {new JLabel("File Format"),
                 fileFormat, new JLabel("Destination"), inTextLocation(location, new JButton("..."))};
+
         fileFormat.setPreferredSize(new Dimension(200,5));
         left.setLayout(new GridLayout(5,1));
+
         for(Component c: components)
             left.add(c);
+
         return left;
     }
 
-    public JTextField getTextField(String name) {
-        return switch(name) {
-            case "file" -> fileFormat;
-            case "location" -> location;
-            case "specific" -> specificLocation;
-            case "date" -> dateText;
+    public JTextField getTextField(Input in) {
+        return switch(in) {
+            case FILE -> fileFormat;
+            case LOCATION -> location;
+            case SPECIFICLOCATION -> specificLocation;
+            case DATE -> dateText;
             default -> null;
         };
     }
@@ -205,9 +228,11 @@ class NorthPanel extends JPanel implements ItemListener {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
                 if(chooser.showOpenDialog(null) == 0) {
                     t.setText(chooser.getSelectedFile().getAbsolutePath());
                 }
+
             }
         };
     }
@@ -331,12 +356,12 @@ class CenterPanel extends JPanel {
         return b1;
     }
 
-    public JButton getButton(String name) {
-        return switch (name) {
-            case "add" -> buttons[0];
-            case "remove" -> buttons[1];
-            case "clear" -> buttons[2];
-            case "sort" -> buttons[3];
+    public JButton getButton(Button b) {
+        return switch (b) {
+            case ADD -> buttons[0];
+            case REMOVE -> buttons[1];
+            case CLEAR -> buttons[2];
+            case SORT -> buttons[3];
             default -> null;
         };
     }
@@ -348,3 +373,30 @@ class CenterPanel extends JPanel {
     }
 }
 
+class MenuBar extends JMenuBar {
+    MenuBar() {
+        JMenu[] menu = {getFileMenu(), new JMenu("Edit"),
+                new JMenu("View"), new JMenu("Window"), getHelp()};
+
+        for(JMenu m: menu) add(m);
+    }
+
+    private JMenu getFileMenu() {
+        JMenu file = new JMenu("File");
+        JMenuItem[] subItem = {new JMenuItem("Print"), new JMenuItem("Quit")};
+
+        subItem[1].addActionListener(e -> {
+            System.exit(0);
+        });
+        for(JMenuItem i: subItem) file.add(i);
+
+        return file;
+    }
+
+    private JMenu getHelp() {
+        JMenu help = new JMenu("Help");
+        JMenuItem about = new JMenuItem("About");
+        help.add(about);
+        return help;
+    }
+}
