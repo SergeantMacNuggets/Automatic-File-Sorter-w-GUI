@@ -10,7 +10,7 @@ import java.awt.event.ItemListener;
 enum Input {
     FILE,
     LOCATION,
-    SPECIFICLOCATION,
+    SPECIFIC_LOCATION,
     DATE
 }
 
@@ -58,7 +58,7 @@ public class Window extends JFrame {
             public void actionPerformed(ActionEvent e) {
 
                 JTextField[] t = {northPanel.getTextField(Input.FILE),northPanel.getTextField(Input.LOCATION)
-                        ,northPanel.getTextField(Input.SPECIFICLOCATION), northPanel.getTextField(Input.DATE)};
+                        ,northPanel.getTextField(Input.SPECIFIC_LOCATION), northPanel.getTextField(Input.DATE)};
 
                 String specificFile=t[0].getText() + " ";
 
@@ -160,7 +160,7 @@ class NorthPanel extends JPanel implements ItemListener {
         return switch(in) {
             case FILE -> fileFormat;
             case LOCATION -> location;
-            case SPECIFICLOCATION -> specificLocation;
+            case SPECIFIC_LOCATION -> specificLocation;
             case DATE -> dateText;
             default -> null;
         };
