@@ -5,7 +5,24 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EmptyStackException;
+import java.util.Stack;
 
+interface MainPanels {
+    NorthPanel northPanel = new NorthPanel();
+    SouthPanel southPanel = new SouthPanel();
+    LeftPanel leftPanel = new LeftPanel();
+    RightPanel rightPanel = new RightPanel();
+    CenterPanel centerPanel = new CenterPanel();
+}
+
+interface Buttons {
+    JButton add = new JButton("Add");
+    JButton remove = new JButton("Remove");
+    JButton undo = new JButton("Undo");
+    JButton sort = new JButton("Sort");
+    JButton clear = new JButton("Clear");
+}
 
 enum Input {
     FILE,
@@ -18,25 +35,16 @@ enum Button {
     ADD,
     REMOVE,
     CLEAR,
+    UNDO,
     SORT
 }
 
 //Window nga musdisplay output sa OS
-public class Window extends JFrame {
-    NorthPanel northPanel;
-    SouthPanel southPanel;
-    LeftPanel leftPanel;
-    RightPanel rightPanel;
-    CenterPanel centerPanel;
+public class Window extends JFrame implements MainPanels {
     Window() {
-        northPanel = new NorthPanel();
-        southPanel = new SouthPanel();
-        leftPanel = new LeftPanel();
-        rightPanel = new RightPanel();
-        centerPanel = new CenterPanel();
 
         JButton[] b = {centerPanel.getButton(Button.ADD),centerPanel.getButton(Button.REMOVE),
-                centerPanel.getButton(Button.CLEAR)};
+                northPanel.clearButton(),centerPanel.getButton(Button.UNDO)};
 
         setSize(800,550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -53,6 +61,10 @@ public class Window extends JFrame {
     private void clickListener(JButton[] b) {
         JList<String> tempLeft = leftPanel.getList();
         JList<String> tempRight = rightPanel.getList();
+        DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
+        DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
+        Stack <String> stackLeft = new Stack<>();
+        Stack <String> stackRight = new Stack<>();
         b[0].addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -80,15 +92,13 @@ public class Window extends JFrame {
         b[1].addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
-                DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
                 int index = tempLeft.getSelectedIndex();
-
+                stackLeft.push(modelLeft.get(index));
+                stackRight.push(modelRight.get(index));
                 if(index != -1) {
                     modelLeft.remove(index);
                     modelRight.remove(index);
                 }
-
             }
         });
         b[2].addActionListener(new ActionListener() {
@@ -100,6 +110,20 @@ public class Window extends JFrame {
                 modelRight.removeAllElements();
             }
         });
+        b[3].addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    leftPanel.setList(stackLeft.peek());
+                    rightPanel.setList(stackRight.peek());
+                    stackLeft.pop();
+                    stackRight.pop();
+                } catch(EmptyStackException s) {
+                    System.out.println(s.getMessage());
+                }
+
+            }
+        });
     }
 
     private JPanel getMain() {
@@ -108,6 +132,7 @@ public class Window extends JFrame {
         setIconImage(new ImageIcon("src/res/icon.png").getImage());
         main.setBorder(padding);
         main.setLayout(new BorderLayout());
+
         main.add(northPanel,BorderLayout.NORTH);
         main.add(southPanel,BorderLayout.SOUTH);
         main.add(leftPanel,BorderLayout.WEST);
@@ -115,11 +140,13 @@ public class Window extends JFrame {
         main.add(centerPanel,BorderLayout.CENTER);
         return main;
     }
+
 }
 
 class NorthPanel extends JPanel implements ItemListener {
     JTextField fileFormat, location, specificLocation,dateText;
     JCheckBox specificLoc;
+    JButton clear;
     boolean radioState=false;
 
     NorthPanel() {
@@ -175,9 +202,8 @@ class NorthPanel extends JPanel implements ItemListener {
         JPanel p1 = new JPanel();
         JPanel datePanel = new JPanel(new GridLayout(1,2));
         JPanel temp = new JPanel();
-        JButton save = new JButton("Save");
-        JButton load = new JButton("Load");
         JButton choose = new JButton("...");
+        clear = new JButton("Clear");
         dateText = new JTextField();
         dateText.setEnabled(false);
         specificLocation = new JTextField();
@@ -200,19 +226,17 @@ class NorthPanel extends JPanel implements ItemListener {
                 }
             }
         });
-        save.addActionListener(openFile());
-        load.addActionListener(openFile());
         JRadioButton file = new JRadioButton("File");
         JRadioButton date = new JRadioButton("Date");
         date.addItemListener(this::itemStateChanged);
         file.setSelected(true);
         right.setLayout(new GridLayout(5,1));
-        p1.setLayout(new GridLayout(1,3,15,0));
+        p1.setLayout(new GridLayout(1,4,15,0));
         datePanel.add(date);
         datePanel.add(dateText);
         p1.add(datePanel);
-        p1.add(save);
-        p1.add(load);
+        p1.add(new JLabel(""));
+        p1.add(clear);
         right.add(specificLoc);
         right.add(inTextLocation(specificLocation,choose));
         right.add(file);
@@ -221,6 +245,11 @@ class NorthPanel extends JPanel implements ItemListener {
         groupRadio.add(date);
         return right;
     }
+
+    public JButton clearButton() {
+        return clear;
+    }
+
 
     private ActionListener getFilePath(JTextField t) {
         return new ActionListener() {
@@ -233,16 +262,6 @@ class NorthPanel extends JPanel implements ItemListener {
                     t.setText(chooser.getSelectedFile().getAbsolutePath());
                 }
 
-            }
-        };
-    }
-
-    private ActionListener openFile() {
-        return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.showOpenDialog(null);
             }
         };
     }
@@ -343,7 +362,7 @@ class RightPanel extends JPanel {
 
 class CenterPanel extends JPanel {
     JButton[] buttons = {createButton("Add"),createButton("Remove"),
-            createButton("Clear"),createButton("Sort")};
+            createButton("Undo"),createButton("Sort")};
     CenterPanel() {
         setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         setPreferredSize(new Dimension(100,600));
@@ -360,7 +379,7 @@ class CenterPanel extends JPanel {
         return switch (b) {
             case ADD -> buttons[0];
             case REMOVE -> buttons[1];
-            case CLEAR -> buttons[2];
+            case UNDO -> buttons[2];
             case SORT -> buttons[3];
             default -> null;
         };
@@ -381,9 +400,15 @@ class MenuBar extends JMenuBar {
         for(JMenu m: menu) add(m);
     }
 
+    //Open file folder
+
     private JMenu getFileMenu() {
         JMenu file = new JMenu("File");
         JMenuItem[] subItem = {new JMenuItem("Print"), new JMenuItem("Quit")};
+
+        subItem[0].addActionListener(e -> {
+            //Isulat code nimo diri mer
+        });
 
         subItem[1].addActionListener(e -> {
             System.exit(0);
@@ -399,4 +424,5 @@ class MenuBar extends JMenuBar {
         help.add(about);
         return help;
     }
+
 }
