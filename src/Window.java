@@ -14,6 +14,9 @@ interface MainPanels {
     LeftPanel leftPanel = new LeftPanel();
     RightPanel rightPanel = new RightPanel();
     CenterPanel centerPanel = new CenterPanel();
+    JButton[] b = {centerPanel.getButton(Button.ADD),centerPanel.getButton(Button.REMOVE),
+            northPanel.clearButton(),centerPanel.getButton(Button.UNDO)};
+
 }
 
 interface Buttons {
@@ -43,12 +46,9 @@ enum Button {
 public class Window extends JFrame implements MainPanels {
     Window() {
 
-        JButton[] b = {centerPanel.getButton(Button.ADD),centerPanel.getButton(Button.REMOVE),
-                northPanel.clearButton(),centerPanel.getButton(Button.UNDO)};
-
         setSize(800,550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("File Sorter");
+        setTitle("Automatic File Sorter");
         setJMenuBar(new MenuBar());
         add(getMain());
         clickListener(b);
@@ -65,64 +65,48 @@ public class Window extends JFrame implements MainPanels {
         DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
         Stack <String> stackLeft = new Stack<>();
         Stack <String> stackRight = new Stack<>();
-        b[0].addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        b[0].addActionListener(e -> {
+            JTextField[] t = {northPanel.getTextInput(Input.LOCATION)
+                    ,northPanel.getTextInput(Input.SPECIFIC_LOCATION), northPanel.getTextInput(Input.DATE)};
 
-                JTextField[] t = {northPanel.getTextField(Input.FILE),northPanel.getTextField(Input.LOCATION)
-                        ,northPanel.getTextField(Input.SPECIFIC_LOCATION), northPanel.getTextField(Input.DATE)};
+            String comboBox = northPanel.getComboBox();
+            String specificFile = comboBox + " " + t[2].getText() + " " + t[1].getText();
 
-                String specificFile=t[0].getText() + " ";
+            if (t[0].getText().isEmpty()
+                    || (northPanel.isSpecificTrue() && t[1].getText().isEmpty())
+                    || (northPanel.isRadioTrue() && t[2].getText().isEmpty())) return;
 
-                specificFile = specificFile.concat((northPanel.isRadioTrue()) ?
-                        t[3].getText()+ " " + (northPanel.isSpecificTrue() ?  t[2].getText() + " ": "")
-                        : northPanel.isSpecificTrue() ?  t[2].getText() + " ": "");
-
-                if(t[0].getText().isEmpty() || t[1].getText().isEmpty()
-                        || (northPanel.isSpecificTrue() && t[2].getText().isEmpty())
-                        || (northPanel.isRadioTrue() && t[3].getText().isEmpty())) return;
-
-                leftPanel.setList(specificFile);
-                rightPanel.setList(t[1].getText());
-                for(JTextField text: t) {
-                    text.setText("");
-                }
-            }
+            leftPanel.setList(specificFile);
+            rightPanel.setList(t[0].getText());
+            for(JTextField text: t) text.setText("");
         });
-        b[1].addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int index = tempLeft.getSelectedIndex();
-                stackLeft.push(modelLeft.get(index));
-                stackRight.push(modelRight.get(index));
-                if(index != -1) {
-                    modelLeft.remove(index);
-                    modelRight.remove(index);
-                }
-            }
-        });
-        b[2].addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
-                DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
-                modelLeft.removeAllElements();
-                modelRight.removeAllElements();
-            }
-        });
-        b[3].addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    leftPanel.setList(stackLeft.peek());
-                    rightPanel.setList(stackRight.peek());
-                    stackLeft.pop();
-                    stackRight.pop();
-                } catch(EmptyStackException s) {
-                    System.out.println(s.getMessage());
-                }
+        b[1].addActionListener(e -> {
+            int index = tempLeft.getSelectedIndex();
+            stackLeft.push(modelLeft.get(index));
+            stackRight.push(modelRight.get(index));
 
+            if(index != -1) {
+                modelLeft.remove(index);
+                modelRight.remove(index);
             }
+
+        });
+        b[2].addActionListener(e -> {
+            DefaultListModel<String> modelLeft1 = (DefaultListModel<String>) tempLeft.getModel();
+            DefaultListModel<String> modelRight1 = (DefaultListModel<String>) tempRight.getModel();
+            modelLeft1.removeAllElements();
+            modelRight1.removeAllElements();
+        });
+        b[3].addActionListener(e -> {
+            try {
+                leftPanel.setList(stackLeft.peek());
+                rightPanel.setList(stackRight.peek());
+                stackLeft.pop();
+                stackRight.pop();
+            } catch(EmptyStackException s) {
+                System.out.println(s.getMessage());
+            }
+
         });
     }
 
@@ -144,12 +128,14 @@ public class Window extends JFrame implements MainPanels {
 }
 
 class NorthPanel extends JPanel implements ItemListener {
-    JTextField fileFormat, location, specificLocation,dateText;
+    JTextField location, specificLocation,dateText;
+    JComboBox fileFormat;
     JCheckBox specificLoc;
     JButton clear;
     boolean radioState=false;
 
     NorthPanel() {
+
         setLayout(new GridLayout(1,2,50,0));
         add(getLeftPanel());
         add(getRightPanel());
@@ -168,12 +154,12 @@ class NorthPanel extends JPanel implements ItemListener {
 
     private JPanel getLeftPanel() {
         JPanel left = new JPanel();
-        fileFormat = new JTextField();
         location = new JTextField();
+        String[] formats = {".mp4", ".mp3", ".docx", ".pptx"};
+        fileFormat = new JComboBox(formats);
 
         Component[] components = {new JLabel("File Format"),
                 fileFormat, new JLabel("Destination"), inTextLocation(location, new JButton("..."))};
-
         fileFormat.setPreferredSize(new Dimension(200,5));
         left.setLayout(new GridLayout(5,1));
 
@@ -183,14 +169,17 @@ class NorthPanel extends JPanel implements ItemListener {
         return left;
     }
 
-    public JTextField getTextField(Input in) {
+    public JTextField getTextInput(Input in) {
         return switch(in) {
-            case FILE -> fileFormat;
             case LOCATION -> location;
             case SPECIFIC_LOCATION -> specificLocation;
             case DATE -> dateText;
             default -> null;
         };
+    }
+
+    public String getComboBox() {
+        return fileFormat.getSelectedItem().toString();
     }
 
     public boolean isSpecificTrue() {
