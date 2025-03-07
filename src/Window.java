@@ -8,30 +8,19 @@ import java.awt.event.ItemListener;
 import java.util.EmptyStackException;
 import java.util.Stack;
 
-interface MainPanels {
-    NorthPanel northPanel = new NorthPanel();
-    SouthPanel southPanel = new SouthPanel();
-    LeftPanel leftPanel = new LeftPanel();
-    RightPanel rightPanel = new RightPanel();
-    CenterPanel centerPanel = new CenterPanel();
-    JButton[] b = {centerPanel.getButton(Button.ADD),centerPanel.getButton(Button.REMOVE),
-            northPanel.clearButton(),centerPanel.getButton(Button.UNDO)};
-
-}
-
-interface Buttons {
-    JButton add = new JButton("Add");
-    JButton remove = new JButton("Remove");
-    JButton undo = new JButton("Undo");
-    JButton sort = new JButton("Sort");
-    JButton clear = new JButton("Clear");
-}
-
 enum Input {
     FILE,
     LOCATION,
     SPECIFIC_LOCATION,
     DATE
+}
+
+enum Panels {
+    NORTH_PANEL,
+    SOUTH_PANEL,
+    LEFT_PANEL,
+    RIGHT_PANEL,
+    CENTER_PANEL
 }
 
 enum Button {
@@ -41,46 +30,130 @@ enum Button {
     UNDO,
     SORT
 }
+interface MainPanels {
+    NorthPanel northPanel = new NorthPanel();
+    SouthPanel southPanel = new SouthPanel();
+    LeftPanel leftPanel = new LeftPanel();
+    RightPanel rightPanel = new RightPanel();
+    CenterPanel centerPanel = new CenterPanel();
+}
 
-//Window nga musdisplay output sa OS
-public class Window extends JFrame implements MainPanels {
-    Window() {
+class MainPanel implements MainPanels {
 
-        setSize(800,550);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("Automatic File Sorter");
-        setJMenuBar(new MenuBar());
-        add(getMain());
-        clickListener(b);
-        setContentPane(getMain());
-        setLocationRelativeTo(null);
-        setResizable(false);
-        setVisible(true);
+    public JButton getButton(Button b) {
+        return switch (b) {
+            case ADD -> centerPanel.getButton()[0];
+
+            case REMOVE -> centerPanel.getButton()[1];
+
+            case CLEAR -> northPanel.clearButton();
+
+            case UNDO -> centerPanel.getButton()[2];
+
+            case SORT -> null;
+
+        };
     }
 
-    private void clickListener(JButton[] b) {
-        JList<String> tempLeft = leftPanel.getList();
-        JList<String> tempRight = rightPanel.getList();
+    @SuppressWarnings("unchecked")
+    public <T> T getPanel(Panels p) {
+        return switch (p) {
+            case NORTH_PANEL -> (T) northPanel;
+
+            case SOUTH_PANEL -> (T) southPanel;
+
+            case LEFT_PANEL -> (T) leftPanel;
+
+            case RIGHT_PANEL -> (T) rightPanel;
+
+            case CENTER_PANEL -> (T) centerPanel;
+
+        };
+    }
+
+    public String getInput(Input i) throws NullPointerException {
+        if(northPanel.getLocationInput().getText().isEmpty() && northPanel.getLocationInput().isEnabled())
+            throw new NullPointerException();
+
+        if(northPanel.getSpecificLocation().getText().isEmpty() && northPanel.getSpecificLocation().isEnabled())
+            throw new NullPointerException();
+
+        if(northPanel.getDateText().getText().isEmpty() && northPanel.getDateText().isEnabled())
+            throw new NullPointerException();
+
+        return switch (i) {
+            case FILE -> northPanel.getFileFormat();
+
+            case LOCATION -> northPanel.getLocationInput().getText();
+
+            case SPECIFIC_LOCATION -> northPanel.getSpecificLocation().getText();
+
+            case DATE -> northPanel.getDateText().getText();
+
+        };
+    }
+
+    public JTextField getField(Input i) {
+        return switch (i) {
+            case LOCATION -> northPanel.getLocationInput();
+
+            case SPECIFIC_LOCATION -> northPanel.getSpecificLocation();
+
+            case DATE -> northPanel.getDateText();
+
+            default -> null;
+        };
+    }
+
+
+}
+
+//Window nga musdisplay output sa OS
+public class Window extends JFrame {
+    MainPanel main;
+    Window() {
+        main = new MainPanel();
+        this.setSize(800,550);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setTitle("Automatic File Sorter");
+        this.setJMenuBar(new MenuBar());
+        this.add(getMain(main));
+        this.clickListener(main);
+        this.setContentPane(getMain(main));
+        this.setLocationRelativeTo(null);
+        this.setResizable(false);
+        this.setVisible(true);
+    }
+
+    private void clickListener(MainPanel main) {
+        LeftPanel left = main.getPanel(Panels.LEFT_PANEL);
+        RightPanel right = main.getPanel(Panels.RIGHT_PANEL);
+        JList<String> tempLeft = left.getList();
+        JList<String> tempRight = right.getList();
         DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
         DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
         Stack <String> stackLeft = new Stack<>();
         Stack <String> stackRight = new Stack<>();
-        b[0].addActionListener(e -> {
-            JTextField[] t = {northPanel.getTextInput(Input.LOCATION)
-                    ,northPanel.getTextInput(Input.SPECIFIC_LOCATION), northPanel.getTextInput(Input.DATE)};
 
-            String comboBox = northPanel.getComboBox();
-            String specificFile = comboBox + " " + t[2].getText() + " " + t[1].getText();
+        main.getButton(Button.ADD).addActionListener(e -> {
+            try {
+                JTextField[] t = {main.getField(Input.LOCATION)
+                        ,main.getField(Input.SPECIFIC_LOCATION), main.getField(Input.DATE)};
 
-            if (t[0].getText().isEmpty()
-                    || (northPanel.isSpecificTrue() && t[1].getText().isEmpty())
-                    || (northPanel.isRadioTrue() && t[2].getText().isEmpty())) return;
+                String specificFile = main.getInput(Input.FILE) + " " + main.getInput(Input.DATE) + " " +
+                        main.getInput(Input.SPECIFIC_LOCATION);
 
-            leftPanel.setList(specificFile);
-            rightPanel.setList(t[0].getText());
-            for(JTextField text: t) text.setText("");
+                left.setList(specificFile);
+                right.setList(main.getInput(Input.LOCATION));
+
+                for(JTextField text: t) text.setText("");
+
+            } catch (NullPointerException n) {
+                System.out.println("Error");
+            }
         });
-        b[1].addActionListener(e -> {
+
+        main.getButton(Button.REMOVE).addActionListener(e -> {
             int index = tempLeft.getSelectedIndex();
             stackLeft.push(modelLeft.get(index));
             stackRight.push(modelRight.get(index));
@@ -91,16 +164,18 @@ public class Window extends JFrame implements MainPanels {
             }
 
         });
-        b[2].addActionListener(e -> {
+
+        main.getButton(Button.CLEAR).addActionListener(e -> {
             DefaultListModel<String> modelLeft1 = (DefaultListModel<String>) tempLeft.getModel();
             DefaultListModel<String> modelRight1 = (DefaultListModel<String>) tempRight.getModel();
             modelLeft1.removeAllElements();
             modelRight1.removeAllElements();
         });
-        b[3].addActionListener(e -> {
+
+        main.getButton(Button.UNDO).addActionListener(e -> {
             try {
-                leftPanel.setList(stackLeft.peek());
-                rightPanel.setList(stackRight.peek());
+                left.setList(stackLeft.peek());
+                right.setList(stackRight.peek());
                 stackLeft.pop();
                 stackRight.pop();
             } catch(EmptyStackException s) {
@@ -110,18 +185,18 @@ public class Window extends JFrame implements MainPanels {
         });
     }
 
-    private JPanel getMain() {
+    private JPanel getMain(MainPanel mainP) {
         JPanel main = new JPanel();
         Border padding = BorderFactory.createEmptyBorder(0,5,0,5);
         setIconImage(new ImageIcon("src/res/icon.png").getImage());
         main.setBorder(padding);
         main.setLayout(new BorderLayout());
 
-        main.add(northPanel,BorderLayout.NORTH);
-        main.add(southPanel,BorderLayout.SOUTH);
-        main.add(leftPanel,BorderLayout.WEST);
-        main.add(rightPanel,BorderLayout.EAST);
-        main.add(centerPanel,BorderLayout.CENTER);
+        main.add(mainP.getPanel(Panels.NORTH_PANEL),BorderLayout.NORTH);
+        main.add(mainP.getPanel(Panels.SOUTH_PANEL),BorderLayout.SOUTH);
+        main.add(mainP.getPanel(Panels.LEFT_PANEL),BorderLayout.WEST);
+        main.add(mainP.getPanel(Panels.RIGHT_PANEL),BorderLayout.EAST);
+        main.add(mainP.getPanel(Panels.CENTER_PANEL),BorderLayout.CENTER);
         return main;
     }
 
@@ -135,7 +210,6 @@ class NorthPanel extends JPanel implements ItemListener {
     boolean radioState=false;
 
     NorthPanel() {
-
         setLayout(new GridLayout(1,2,50,0));
         add(getLeftPanel());
         add(getRightPanel());
@@ -154,13 +228,15 @@ class NorthPanel extends JPanel implements ItemListener {
 
     private JPanel getLeftPanel() {
         JPanel left = new JPanel();
+        String[] formats = {"Videos",".mp4", ".mp3","Documents" ,".docx", ".pptx"};
         location = new JTextField();
-        String[] formats = {".mp4", ".mp3", ".docx", ".pptx"};
         fileFormat = new JComboBox(formats);
+        fileFormat.setEditable(true);
+        fileFormat.setPreferredSize(new Dimension(200,5));
+        fileFormat.setSelectedIndex(-1);
 
         Component[] components = {new JLabel("File Format"),
                 fileFormat, new JLabel("Destination"), inTextLocation(location, new JButton("..."))};
-        fileFormat.setPreferredSize(new Dimension(200,5));
         left.setLayout(new GridLayout(5,1));
 
         for(Component c: components)
@@ -169,22 +245,21 @@ class NorthPanel extends JPanel implements ItemListener {
         return left;
     }
 
-    public JTextField getTextInput(Input in) {
-        return switch(in) {
-            case LOCATION -> location;
-            case SPECIFIC_LOCATION -> specificLocation;
-            case DATE -> dateText;
-            default -> null;
-        };
+    public JTextField getLocationInput() {
+        return location;
     }
 
-    public String getComboBox() {
+    public JTextField getSpecificLocation() {
+        return specificLocation;
+    }
+    public JTextField getDateText() {
+        return dateText;
+    }
+
+    public String getFileFormat() {
         return fileFormat.getSelectedItem().toString();
     }
 
-    public boolean isSpecificTrue() {
-        return specificLoc.isSelected();
-    }
 
     private JPanel getRightPanel() {
         JPanel right = new JPanel();
@@ -265,9 +340,6 @@ class NorthPanel extends JPanel implements ItemListener {
             dateText.setEnabled(false);
             radioState = false;
         }
-    }
-    public boolean isRadioTrue() {
-        return radioState;
     }
 }
 
@@ -352,10 +424,13 @@ class RightPanel extends JPanel {
 class CenterPanel extends JPanel {
     JButton[] buttons = {createButton("Add"),createButton("Remove"),
             createButton("Undo"),createButton("Sort")};
+
     CenterPanel() {
         setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         setPreferredSize(new Dimension(100,600));
-        for (JButton b: buttons) add(getPanel(b));
+
+        for (JButton b: buttons)
+            add(getPanel(b));
     }
 
     private JButton createButton(String s) {
@@ -364,14 +439,8 @@ class CenterPanel extends JPanel {
         return b1;
     }
 
-    public JButton getButton(Button b) {
-        return switch (b) {
-            case ADD -> buttons[0];
-            case REMOVE -> buttons[1];
-            case UNDO -> buttons[2];
-            case SORT -> buttons[3];
-            default -> null;
-        };
+    public JButton[] getButton() {
+        return buttons;
     }
 
     private JPanel getPanel(JButton b1) {
