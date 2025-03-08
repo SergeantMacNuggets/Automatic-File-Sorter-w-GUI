@@ -39,10 +39,12 @@ interface MainPanels {
 }
 
 class MainPanel implements MainPanels {
-    private JList<String> tempLeft, tempRight;
-    private DefaultListModel<String> modelLeft,modelRight;
-    private Stack<String> stackLeft, stackRight;
-    MainPanel() {
+    final private JList<String> tempLeft, tempRight;
+    final private DefaultListModel<String> modelLeft,modelRight;
+    final private Stack<String> stackLeft, stackRight;
+    Accounts account;
+    MainPanel(Accounts account) {
+        this.account = account;
         tempLeft = leftPanel.getList();
         tempRight = rightPanel.getList();
         modelLeft = (DefaultListModel<String>) tempLeft.getModel();
@@ -50,10 +52,25 @@ class MainPanel implements MainPanels {
         stackLeft = new Stack<>();
         stackRight = new Stack<>();
 
+        if (account instanceof Guest) {
+            getButton(Button.ADD).setEnabled(false);
+
+            getButton(Button.REMOVE).setEnabled(false);
+
+            getButton(Button.CLEAR).setEnabled(false);
+
+            getButton(Button.UNDO).setEnabled(false);
+
+            getButton(Button.SORT).setEnabled(false);
+        }
         getButton(Button.ADD).addActionListener(addListenerButton());
+
         getButton(Button.REMOVE).addActionListener(removeListenerButton());
+
         getButton(Button.CLEAR).addActionListener(clearListenerButton());
+
         getButton(Button.UNDO).addActionListener(undoListenerButton());
+
     }
 
     public JButton getButton(Button b) {
@@ -66,7 +83,7 @@ class MainPanel implements MainPanels {
 
             case UNDO -> centerPanel.getButton()[2];
 
-            case SORT -> null;
+            case SORT -> centerPanel.getButton()[3];
         };
     }
 
@@ -175,24 +192,16 @@ class MainPanel implements MainPanels {
 //Window nga musdisplay output sa OS
 public class Window extends JFrame {
     private MainPanel main;
-    private Accounts account;
+    final private Accounts account;
 
-    Window(Admin admin) {
-        this.account = admin;
-        start();
-    }
-    Window(Guest guest) {
-        this.account = guest;
-        printUser();
+    Window(Accounts account) {
+        this.account = account;
         start();
     }
 
-    public void printUser() {
-        System.out.println(account.getClass());
-    }
 
     public void start() {
-        main = new MainPanel();
+        main = new MainPanel(account);
         this.setSize(800,550);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setTitle("Automatic File Sorter");
@@ -287,7 +296,7 @@ class NorthPanel extends JPanel implements ItemListener {
         return dateText;
     }
 
-    public String getFileFormat() {
+    public String getFileFormat() throws NullPointerException {
         return fileFormat.getSelectedItem().toString();
     }
 
@@ -323,7 +332,7 @@ class NorthPanel extends JPanel implements ItemListener {
         });
         JRadioButton file = new JRadioButton("File");
         JRadioButton date = new JRadioButton("Date");
-        date.addItemListener(this::itemStateChanged);
+        date.addItemListener(this);
         file.setSelected(true);
         right.setLayout(new GridLayout(5,1));
         p1.setLayout(new GridLayout(1,4,15,0));
@@ -418,8 +427,8 @@ class LeftPanel extends JPanel {
 }
 
 class RightPanel extends JPanel {
-    private JList<String> list;
-    private DefaultListModel<String> listD;
+    final private JList<String> list;
+    final private DefaultListModel<String> listD;
     RightPanel() {
         listD = new DefaultListModel<>();
         list = new JList<>(listD);
@@ -499,9 +508,7 @@ class MenuBar extends JMenuBar {
             //Isulat code nimo diri mer
         });
 
-        subItem[1].addActionListener(e -> {
-            System.exit(0);
-        });
+        subItem[1].addActionListener(e -> System.exit(0));
         for(JMenuItem i: subItem) file.add(i);
 
         return file;
