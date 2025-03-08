@@ -39,6 +39,22 @@ interface MainPanels {
 }
 
 class MainPanel implements MainPanels {
+    private JList<String> tempLeft, tempRight;
+    private DefaultListModel<String> modelLeft,modelRight;
+    private Stack<String> stackLeft, stackRight;
+    MainPanel() {
+        tempLeft = leftPanel.getList();
+        tempRight = rightPanel.getList();
+        modelLeft = (DefaultListModel<String>) tempLeft.getModel();
+        modelRight = (DefaultListModel<String>) tempRight.getModel();
+        stackLeft = new Stack<>();
+        stackRight = new Stack<>();
+
+        getButton(Button.ADD).addActionListener(addListenerButton());
+        getButton(Button.REMOVE).addActionListener(removeListenerButton());
+        getButton(Button.CLEAR).addActionListener(clearListenerButton());
+        getButton(Button.UNDO).addActionListener(undoListenerButton());
+    }
 
     public JButton getButton(Button b) {
         return switch (b) {
@@ -67,19 +83,10 @@ class MainPanel implements MainPanels {
             case RIGHT_PANEL -> (T) rightPanel;
 
             case CENTER_PANEL -> (T) centerPanel;
-
         };
     }
 
-    public String getInput(Input i) throws NullPointerException {
-        if(northPanel.getLocationInput().getText().isEmpty() && northPanel.getLocationInput().isEnabled())
-            throw new NullPointerException();
-
-        if(northPanel.getSpecificLocation().getText().isEmpty() && northPanel.getSpecificLocation().isEnabled())
-            throw new NullPointerException();
-
-        if(northPanel.getDateText().getText().isEmpty() && northPanel.getDateText().isEnabled())
-            throw new NullPointerException();
+    public String getInput(Input i) {
 
         return switch (i) {
             case FILE -> northPanel.getFileFormat();
@@ -105,12 +112,70 @@ class MainPanel implements MainPanels {
         };
     }
 
+    private ActionListener addListenerButton() {
+        return e -> {
+            try {
+                JTextField[] t = {getField(Input.LOCATION)
+                        ,getField(Input.SPECIFIC_LOCATION), getField(Input.DATE)};
+
+                String specificFile = getInput(Input.FILE) + " " + getInput(Input.DATE) + " " +
+                        getInput(Input.SPECIFIC_LOCATION);
+
+                leftPanel.setList(specificFile);
+                rightPanel.setList(getInput(Input.LOCATION));
+
+                for(JTextField text: t) text.setText("");
+
+            } catch (NullPointerException n) {
+                System.out.println("Error");
+            }
+        };
+    }
+
+    private ActionListener removeListenerButton() {
+        return e -> {
+            try {
+                int index = tempLeft.getSelectedIndex();
+                stackLeft.push(modelLeft.get(index));
+                stackRight.push(modelRight.get(index));
+
+                if(index != -1) {
+                    modelLeft.remove(index);
+                    modelRight.remove(index);
+                }
+            } catch (ArrayIndexOutOfBoundsException s) {
+                System.out.println("No Remove");
+            }
+        };
+    }
+
+    private ActionListener clearListenerButton() {
+        return e -> {
+            DefaultListModel<String> modelLeft1 = (DefaultListModel<String>) tempLeft.getModel();
+            DefaultListModel<String> modelRight1 = (DefaultListModel<String>) tempRight.getModel();
+            modelLeft1.removeAllElements();
+            modelRight1.removeAllElements();
+        };
+    }
+
+    private ActionListener undoListenerButton() {
+        return e -> {
+            try {
+                leftPanel.setList(stackLeft.peek());
+                rightPanel.setList(stackRight.peek());
+                stackLeft.pop();
+                stackRight.pop();
+            } catch(EmptyStackException s) {
+                System.out.println(s.getMessage());
+            }
+        };
+    }
 
 }
 
 //Window nga musdisplay output sa OS
 public class Window extends JFrame {
-    MainPanel main;
+    private MainPanel main;
     Window() {
         main = new MainPanel();
         this.setSize(800,550);
@@ -118,72 +183,12 @@ public class Window extends JFrame {
         this.setTitle("Automatic File Sorter");
         this.setJMenuBar(new MenuBar());
         this.add(getMain(main));
-        this.clickListener(main);
         this.setContentPane(getMain(main));
         this.setLocationRelativeTo(null);
         this.setResizable(false);
         this.setVisible(true);
     }
 
-    private void clickListener(MainPanel main) {
-        LeftPanel left = main.getPanel(Panels.LEFT_PANEL);
-        RightPanel right = main.getPanel(Panels.RIGHT_PANEL);
-        JList<String> tempLeft = left.getList();
-        JList<String> tempRight = right.getList();
-        DefaultListModel<String> modelLeft = (DefaultListModel<String>) tempLeft.getModel();
-        DefaultListModel<String> modelRight = (DefaultListModel<String>) tempRight.getModel();
-        Stack <String> stackLeft = new Stack<>();
-        Stack <String> stackRight = new Stack<>();
-
-        main.getButton(Button.ADD).addActionListener(e -> {
-            try {
-                JTextField[] t = {main.getField(Input.LOCATION)
-                        ,main.getField(Input.SPECIFIC_LOCATION), main.getField(Input.DATE)};
-
-                String specificFile = main.getInput(Input.FILE) + " " + main.getInput(Input.DATE) + " " +
-                        main.getInput(Input.SPECIFIC_LOCATION);
-
-                left.setList(specificFile);
-                right.setList(main.getInput(Input.LOCATION));
-
-                for(JTextField text: t) text.setText("");
-
-            } catch (NullPointerException n) {
-                System.out.println("Error");
-            }
-        });
-
-        main.getButton(Button.REMOVE).addActionListener(e -> {
-            int index = tempLeft.getSelectedIndex();
-            stackLeft.push(modelLeft.get(index));
-            stackRight.push(modelRight.get(index));
-
-            if(index != -1) {
-                modelLeft.remove(index);
-                modelRight.remove(index);
-            }
-
-        });
-
-        main.getButton(Button.CLEAR).addActionListener(e -> {
-            DefaultListModel<String> modelLeft1 = (DefaultListModel<String>) tempLeft.getModel();
-            DefaultListModel<String> modelRight1 = (DefaultListModel<String>) tempRight.getModel();
-            modelLeft1.removeAllElements();
-            modelRight1.removeAllElements();
-        });
-
-        main.getButton(Button.UNDO).addActionListener(e -> {
-            try {
-                left.setList(stackLeft.peek());
-                right.setList(stackRight.peek());
-                stackLeft.pop();
-                stackRight.pop();
-            } catch(EmptyStackException s) {
-                System.out.println(s.getMessage());
-            }
-
-        });
-    }
 
     private JPanel getMain(MainPanel mainP) {
         JPanel main = new JPanel();
@@ -199,7 +204,6 @@ public class Window extends JFrame {
         main.add(mainP.getPanel(Panels.CENTER_PANEL),BorderLayout.CENTER);
         return main;
     }
-
 }
 
 class NorthPanel extends JPanel implements ItemListener {
@@ -245,14 +249,26 @@ class NorthPanel extends JPanel implements ItemListener {
         return left;
     }
 
-    public JTextField getLocationInput() {
+    public JTextField getLocationInput() throws NullPointerException{
+
+        if(location.getText().isEmpty() && location.isEnabled())
+            throw new NullPointerException();
+
         return location;
     }
 
-    public JTextField getSpecificLocation() {
+    public JTextField getSpecificLocation() throws NullPointerException {
+
+        if(specificLocation.getText().isEmpty() && specificLocation.isEnabled())
+            throw new NullPointerException();
+
         return specificLocation;
     }
-    public JTextField getDateText() {
+    public JTextField getDateText() throws NullPointerException{
+
+        if(dateText.getText().isEmpty() && dateText.isEnabled())
+            throw new NullPointerException();
+
         return dateText;
     }
 
@@ -387,8 +403,8 @@ class LeftPanel extends JPanel {
 }
 
 class RightPanel extends JPanel {
-    JList<String> list;
-    DefaultListModel<String> listD;
+    private JList<String> list;
+    private DefaultListModel<String> listD;
     RightPanel() {
         listD = new DefaultListModel<>();
         list = new JList<>(listD);
@@ -422,7 +438,7 @@ class RightPanel extends JPanel {
 }
 
 class CenterPanel extends JPanel {
-    JButton[] buttons = {createButton("Add"),createButton("Remove"),
+    final private JButton[] buttons = {createButton("Add"),createButton("Remove"),
             createButton("Undo"),createButton("Sort")};
 
     CenterPanel() {
