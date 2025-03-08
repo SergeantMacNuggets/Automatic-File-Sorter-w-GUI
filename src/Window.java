@@ -67,7 +67,6 @@ class MainPanel implements MainPanels {
             case UNDO -> centerPanel.getButton()[2];
 
             case SORT -> null;
-
         };
     }
 
@@ -176,7 +175,23 @@ class MainPanel implements MainPanels {
 //Window nga musdisplay output sa OS
 public class Window extends JFrame {
     private MainPanel main;
-    Window() {
+    private Accounts account;
+
+    Window(Admin admin) {
+        this.account = admin;
+        start();
+    }
+    Window(Guest guest) {
+        this.account = guest;
+        printUser();
+        start();
+    }
+
+    public void printUser() {
+        System.out.println(account.getClass());
+    }
+
+    public void start() {
         main = new MainPanel();
         this.setSize(800,550);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
