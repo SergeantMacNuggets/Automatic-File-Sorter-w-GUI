@@ -191,26 +191,29 @@ class MainPanel implements MainPanels {
 
 //Window nga musdisplay output sa OS
 public class Window extends JFrame {
-    private MainPanel main;
-    final private Accounts account;
+    private final Accounts account;
 
     Window(Accounts account) {
         this.account = account;
-        start();
     }
 
-
     public void start() {
-        main = new MainPanel(account);
-        this.setSize(800,550);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setTitle("Automatic File Sorter");
-        this.setJMenuBar(new MenuBar());
-        this.add(getMain(main));
-        this.setContentPane(getMain(main));
-        this.setLocationRelativeTo(null);
-        this.setResizable(false);
-        this.setVisible(true);
+        try {
+            AccountWindow.checkNull();
+            MainPanel main = new MainPanel(account);
+            this.setSize(800,550);
+            this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            this.setTitle("Automatic File Sorter");
+            this.setJMenuBar(new MenuBar());
+            this.add(getMain(main));
+            this.setContentPane(getMain(main));
+            this.setLocationRelativeTo(null);
+            this.setResizable(false);
+            this.setVisible(true);
+        } catch (NullPointerException e) {
+            Accounts.clearInstance();
+            AccountWindow.getInstance().start();
+        }
     }
 
 
@@ -233,7 +236,6 @@ public class Window extends JFrame {
 class NorthPanel extends JPanel implements ItemListener {
     JTextField location, specificLocation,dateText;
     JComboBox fileFormat;
-    JCheckBox specificLoc;
     JButton clear;
     boolean radioState=false;
 
@@ -311,25 +313,8 @@ class NorthPanel extends JPanel implements ItemListener {
         dateText = new JTextField();
         dateText.setEnabled(false);
         specificLocation = new JTextField();
-        specificLocation.setEnabled(false);
-        choose.setEnabled(false);
         temp.setLayout(new BorderLayout());
         ButtonGroup groupRadio = new ButtonGroup();
-        specificLoc = new JCheckBox("Specified Location");
-        specificLoc.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JCheckBox temp = (JCheckBox) e.getSource();
-                if(temp.isSelected()) {
-                    specificLocation.setEnabled(true);
-                    choose.setEnabled(true);
-                }
-                else {
-                    specificLocation.setEnabled(false);
-                    choose.setEnabled(false);
-                }
-            }
-        });
         JRadioButton file = new JRadioButton("File");
         JRadioButton date = new JRadioButton("Date");
         date.addItemListener(this);
@@ -341,7 +326,7 @@ class NorthPanel extends JPanel implements ItemListener {
         p1.add(datePanel);
         p1.add(new JLabel(""));
         p1.add(clear);
-        right.add(specificLoc);
+        right.add(new JLabel("Source Folder"));
         right.add(inTextLocation(specificLocation,choose));
         right.add(file);
         right.add(p1);

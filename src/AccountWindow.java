@@ -6,6 +6,9 @@ import java.awt.event.ActionListener;
 abstract class Accounts {
     static Accounts account;
 
+    public static void clearInstance() {
+        account=null;
+    }
 }
 
 public class AccountWindow extends JFrame {
@@ -14,6 +17,7 @@ public class AccountWindow extends JFrame {
     JTextField username, newUserName;
     JPasswordField password, newPassword;
     JButton guestButton, loginButton, signupButton;
+    Window window;
     boolean signupState = false, loginState = true;
     public void start() {
         leftPanel = getLeftPanel();
@@ -105,7 +109,8 @@ public class AccountWindow extends JFrame {
             }
 
             if (user.equals(Admin.getUsername()) && pass.equals(Admin.getPassword())) {
-                new Window(Admin.getInstance());
+                window = new Window(Admin.getInstance());
+                window.start();
                 this.setVisible(false);
                 this.dispose();
             }
@@ -127,7 +132,8 @@ public class AccountWindow extends JFrame {
 
     private ActionListener guestIn() {
         return _ -> {
-            new Window(Guest.getInstance());
+            window = new Window(Guest.getInstance());
+            window.start();
             this.setVisible(false);
             this.dispose();
         };
@@ -140,12 +146,15 @@ public class AccountWindow extends JFrame {
         return accountWindow;
     }
 
+    public static void checkNull() throws NullPointerException{
+        if(accountWindow==null) throw new NullPointerException();
+    }
+
 }
 
 
 class Admin extends Accounts{
     final private static String username="admin", password="admin";
-
     public static String getUsername() {
         return username;
     }
@@ -159,6 +168,7 @@ class Admin extends Accounts{
 
         return account;
     }
+
 }
 
 class Guest extends Accounts{
