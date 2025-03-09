@@ -2,6 +2,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 abstract class Accounts {
     static Accounts account;
@@ -11,12 +13,41 @@ abstract class Accounts {
     }
 }
 
+
+class Admin extends Accounts{
+    final private static String username="admin", password="admin";
+    public static String getUsername() {
+        return username;
+    }
+    public static String getPassword() {
+        return password;
+    }
+
+    public static Accounts getInstance() {
+        if(account == null)
+            account = new Admin();
+
+        return account;
+    }
+
+}
+
+class Guest extends Accounts{
+    public static Accounts getInstance() {
+        if(account == null)
+            account = new Guest();
+
+        return account;
+    }
+}
+
 public class AccountWindow extends JFrame {
     private static AccountWindow accountWindow;
     JPanel leftPanel;
     JTextField username, newUserName;
     JPasswordField password, newPassword;
     JButton guestButton, loginButton, signupButton;
+    JLabel forgotPassword;
     Window window;
     boolean signupState = false, loginState = true;
     public void start() {
@@ -43,15 +74,32 @@ public class AccountWindow extends JFrame {
 
     private JPanel getLoginPanel() {
         JPanel p = new JPanel();
+        forgotPassword = new JLabel("Forgot Password");
+        forgotPassword.setFont(new Font("Ariel", Font.BOLD,10));
+        forgotPassword.setForeground(Color.BLUE.darker());
+        forgotPassword.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                ChangePassword.getInstance();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                super.mouseEntered(e);
+                forgotPassword.setForeground(Color.blue.brighter());
+            }
+        });
         username = new JTextField();
         password = new JPasswordField();
         Border padding = BorderFactory.createEmptyBorder(5,5,20,5);
-        p.setLayout(new GridLayout(4,1,0,5));
+        p.setLayout(new GridLayout(5,1,0,5));
         p.setBorder(padding);
         p.add(new JLabel("Username"));
         p.add(username);
         p.add(new JLabel("Password"));
         p.add(password);
+        p.add(forgotPassword);
         return p;
     }
 
@@ -149,33 +197,41 @@ public class AccountWindow extends JFrame {
     public static void checkNull() throws NullPointerException{
         if(accountWindow==null) throw new NullPointerException();
     }
-
 }
 
-
-class Admin extends Accounts{
-    final private static String username="admin", password="admin";
-    public static String getUsername() {
-        return username;
+class ChangePassword extends JFrame {
+    private static ChangePassword changePassword;
+    JPasswordField oldPass, newPass;
+    JButton enter;
+    JPanel p;
+    ChangePassword() {
+        oldPass = new JPasswordField();
+        newPass = new JPasswordField();
+        enter = new JButton("Enter");
+        enter.addActionListener(_ -> {
+            this.setVisible(false);
+            this.dispose();
+        });
+        p=new JPanel();
+        p.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        this.setIconImage(new ImageIcon("src/res/icon.png").getImage());
+        this.setLocationRelativeTo(null);
+        this.setSize(200,200);
+        this.setResizable(false);
+        p.setLayout(new GridLayout(5,1,0,10));
+        p.add(new JLabel("Old Password"));
+        p.add(oldPass);
+        p.add(new JLabel("New Password"));
+        p.add(newPass);
+        p.add(enter);
+        add(p);
+        this.setVisible(true);
     }
-    public static String getPassword() {
-        return password;
+
+    public static ChangePassword getInstance() {
+        if(changePassword==null)
+            changePassword=new ChangePassword();
+        return changePassword;
     }
-
-    public static Accounts getInstance() {
-        if(account == null)
-            account = new Admin();
-
-        return account;
-    }
-
 }
 
-class Guest extends Accounts{
-    public static Accounts getInstance() {
-        if(account == null)
-            account = new Guest();
-
-        return account;
-    }
-}
