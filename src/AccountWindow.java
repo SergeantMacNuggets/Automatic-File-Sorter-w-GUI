@@ -13,9 +13,9 @@ abstract class Accounts {
     }
 }
 
-
 class Admin extends Accounts{
     final private static String username="admin", password="admin";
+
     public static String getUsername() {
         return username;
     }
@@ -43,13 +43,14 @@ class Guest extends Accounts{
 
 public class AccountWindow extends JFrame {
     private static AccountWindow accountWindow;
+    ChangePassword changePassword;
     JPanel leftPanel;
     JTextField username, newUserName;
     JPasswordField password, newPassword;
     JButton guestButton, loginButton, signupButton;
     JLabel forgotPassword;
-    Window window;
     boolean signupState = false, loginState = true;
+
     public void start() {
         leftPanel = getLeftPanel();
         this.setSize(400,200);
@@ -74,49 +75,44 @@ public class AccountWindow extends JFrame {
 
     private JPanel getLoginPanel() {
         JPanel p = new JPanel();
-        forgotPassword = new JLabel("Forgot Password");
+        Component[] components = {new JLabel("Username"), username = new JTextField(), new JLabel("Password"),
+                                  password = new JPasswordField(), forgotPassword = new JLabel("Forgot Password")};
+
         forgotPassword.setFont(new Font("Ariel", Font.BOLD,10));
         forgotPassword.setForeground(Color.BLUE.darker());
-        forgotPassword.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                ChangePassword.getInstance();
-            }
+        forgotPassword.addMouseListener(forgotPass());
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                super.mouseEntered(e);
-                forgotPassword.setForeground(Color.blue.brighter());
-            }
-        });
-        username = new JTextField();
-        password = new JPasswordField();
         Border padding = BorderFactory.createEmptyBorder(5,5,20,5);
         p.setLayout(new GridLayout(5,1,0,5));
         p.setBorder(padding);
-        p.add(new JLabel("Username"));
-        p.add(username);
-        p.add(new JLabel("Password"));
-        p.add(password);
-        p.add(forgotPassword);
+
+        for(Component c: components)
+            p.add(c);
+
         return p;
     }
 
+    private MouseAdapter forgotPass() {
+
+        return new MouseAdapter() {
+                @Override
+                public void mouseClicked (MouseEvent e){
+                    super.mouseClicked(e);
+                    changePassword = ChangePassword.getInstance();
+                }
+        };
+    }
+
     private JPanel getSignupPanel() {
+        Component[] components = {new JLabel("New Username"), newUserName = new JTextField(),
+                                  new JLabel("New Password"),
+        newPassword = new JPasswordField(),new JLabel("ConfirmPassword"), new JPasswordField()};
         JPanel p = new JPanel();
-        newUserName = new JTextField();
-        newPassword = new JPasswordField();
-        JPasswordField confirmPassword = new JPasswordField();
         Border padding = BorderFactory.createEmptyBorder(5,5,20,5);
         p.setLayout(new GridLayout(6,1,0,5));
         p.setBorder(padding);
-        p.add(new JLabel("New Username"));
-        p.add(newUserName);
-        p.add(new JLabel("New Password"));
-        p.add(newPassword);
-        p.add(new JLabel("Confirm Password"));
-        p.add(confirmPassword);
+        for(Component c: components)
+            p.add(c);
         return p;
     }
 
@@ -157,9 +153,9 @@ public class AccountWindow extends JFrame {
             }
 
             if (user.equals(Admin.getUsername()) && pass.equals(Admin.getPassword())) {
-                window = new Window(Admin.getInstance());
-                window.start();
+                Window.getInstance(Admin.getInstance()).start();
                 this.setVisible(false);
+                AccountWindow.clearInstance();
                 this.dispose();
             }
 
@@ -180,9 +176,9 @@ public class AccountWindow extends JFrame {
 
     private ActionListener guestIn() {
         return _ -> {
-            window = new Window(Guest.getInstance());
-            window.start();
+            Window.getInstance(Guest.getInstance()).start();
             this.setVisible(false);
+            AccountWindow.clearInstance();
             this.dispose();
         };
     }
@@ -197,41 +193,61 @@ public class AccountWindow extends JFrame {
     public static void checkNull() throws NullPointerException{
         if(accountWindow==null) throw new NullPointerException();
     }
+
+    public static void clearInstance() {
+        accountWindow=null;
+    }
 }
 
 class ChangePassword extends JFrame {
     private static ChangePassword changePassword;
     JPasswordField oldPass, newPass;
     JButton enter;
-    JPanel p;
+
     ChangePassword() {
-        oldPass = new JPasswordField();
-        newPass = new JPasswordField();
-        enter = new JButton("Enter");
-        enter.addActionListener(_ -> {
-            this.setVisible(false);
-            this.dispose();
-        });
-        p=new JPanel();
-        p.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         this.setIconImage(new ImageIcon("src/res/icon.png").getImage());
         this.setLocationRelativeTo(null);
         this.setSize(200,200);
         this.setResizable(false);
-        p.setLayout(new GridLayout(5,1,0,10));
-        p.add(new JLabel("Old Password"));
-        p.add(oldPass);
-        p.add(new JLabel("New Password"));
-        p.add(newPass);
-        p.add(enter);
-        add(p);
+        this.add(mainPanel());
         this.setVisible(true);
     }
 
+    private JPanel mainPanel() {
+        JPanel p = new JPanel();
+        Component[] components = {new JLabel("Old Password"),oldPass = new JPasswordField(), new JLabel("New Password"),
+                                  newPass = new JPasswordField(), enter = new JButton("Enter")};
+
+        p.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        p.setLayout(new GridLayout(5,1,0,10));
+
+        enter.addActionListener(enterButton());
+
+        for(Component c: components)
+            p.add(c);
+
+        return p;
+    }
+
+    private ActionListener enterButton() {
+
+        return _ -> {
+            this.setVisible(false);
+            this.dispose();
+            ChangePassword.clearInstance();
+        };
+    }
+
     public static ChangePassword getInstance() {
+
         if(changePassword==null)
             changePassword=new ChangePassword();
+
         return changePassword;
+    }
+
+    public static void clearInstance() {
+        changePassword=null;
     }
 }
 

@@ -42,7 +42,8 @@ class MainPanel implements MainPanels {
     final private JList<String> tempLeft, tempRight;
     final private DefaultListModel<String> modelLeft,modelRight;
     final private Stack<String> stackLeft, stackRight;
-    Accounts account;
+    final private Accounts account;
+
     MainPanel(Accounts account) {
         this.account = account;
         tempLeft = leftPanel.getList();
@@ -51,26 +52,26 @@ class MainPanel implements MainPanels {
         modelRight = (DefaultListModel<String>) tempRight.getModel();
         stackLeft = new Stack<>();
         stackRight = new Stack<>();
+        allButton(account);
 
-        if (account instanceof Guest) {
-            getButton(Button.ADD).setEnabled(false);
+    }
 
-            getButton(Button.REMOVE).setEnabled(false);
+    private void allButton(Accounts acc) {
+        JButton[] b = {getButton(Button.ADD), getButton(Button.REMOVE),getButton(Button.CLEAR),
+                getButton(Button.UNDO),getButton(Button.SORT)};
 
-            getButton(Button.CLEAR).setEnabled(false);
+        ActionListener[] events = {addListenerButton(),removeListenerButton(),
+                clearListenerButton(),undoListenerButton()};
 
-            getButton(Button.UNDO).setEnabled(false);
-
-            getButton(Button.SORT).setEnabled(false);
+        if (acc instanceof Guest) {
+            for (JButton button: b)
+                button.setEnabled(false);
         }
-        getButton(Button.ADD).addActionListener(addListenerButton());
 
-        getButton(Button.REMOVE).addActionListener(removeListenerButton());
-
-        getButton(Button.CLEAR).addActionListener(clearListenerButton());
-
-        getButton(Button.UNDO).addActionListener(undoListenerButton());
-
+        else if(acc instanceof Admin) {
+            for (int i=0;i<4;i++)
+                b[i].addActionListener(events[i]);
+        }
     }
 
     public JButton getButton(Button b) {
@@ -191,14 +192,13 @@ class MainPanel implements MainPanels {
 
 //Window nga musdisplay output sa OS
 public class Window extends JFrame {
-    private final Accounts account;
+    private static Accounts account;
+    private static Window window;
 
-    Window(Accounts account) {
-        this.account = account;
-    }
 
     public void start() {
         try {
+            Window.isNull();
             AccountWindow.checkNull();
             MainPanel main = new MainPanel(account);
             this.setSize(800,550);
@@ -211,6 +211,7 @@ public class Window extends JFrame {
             this.setResizable(false);
             this.setVisible(true);
         } catch (NullPointerException e) {
+            Window.clearInstance();
             Accounts.clearInstance();
             AccountWindow.getInstance().start();
         }
@@ -231,6 +232,25 @@ public class Window extends JFrame {
         main.add(mainP.getPanel(Panels.CENTER_PANEL),BorderLayout.CENTER);
         return main;
     }
+
+    public static Window getInstance(Accounts account) {
+
+        if(window == null) {
+            Window.account = account;
+            window = new Window();
+        }
+        return window;
+    }
+
+    public static void clearInstance() {
+        window = null;
+    }
+
+    public static void isNull() throws NullPointerException {
+        if(Window.window==null)
+            throw new NullPointerException();
+    }
+
 }
 
 class NorthPanel extends JPanel implements ItemListener {
