@@ -55,9 +55,8 @@ class Window extends JFrame {
 
 }
 
-public class Main {
+public class Run {
     public static void main(String[] args) {
-//        Window.getInstance(Admin.getInstance()).start();
         AccountWindow.getInstance().start();
     }
 }
