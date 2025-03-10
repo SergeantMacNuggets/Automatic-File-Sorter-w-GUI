@@ -50,9 +50,12 @@ public class AccountWindow extends JFrame {
     JButton guestButton, loginButton, signupButton;
     JLabel forgotPassword;
     boolean signupState = false, loginState = true;
-
+    static boolean running;
+    Accounts account;
     public void start() {
+        running = true;
         leftPanel = getLeftPanel();
+        Accounts.clearInstance();
         this.setSize(400,200);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setTitle("Log in");
@@ -63,6 +66,10 @@ public class AccountWindow extends JFrame {
         this.add(getRightPanel());
         this.setResizable(false);
         this.setVisible(true);
+    }
+
+    public static boolean isRunning() {
+        return running;
     }
 
     private JPanel getLeftPanel() {
@@ -76,7 +83,7 @@ public class AccountWindow extends JFrame {
     private JPanel getLoginPanel() {
         JPanel p = new JPanel();
         Component[] components = {new JLabel("Username"), username = new JTextField(), new JLabel("Password"),
-                                  password = new JPasswordField(), forgotPassword = new JLabel("Forgot Password")};
+                password = new JPasswordField(), forgotPassword = new JLabel("Forgot Password")};
 
         forgotPassword.setFont(new Font("Ariel", Font.BOLD,10));
         forgotPassword.setForeground(Color.BLUE.darker());
@@ -95,18 +102,18 @@ public class AccountWindow extends JFrame {
     private MouseAdapter forgotPass() {
 
         return new MouseAdapter() {
-                @Override
-                public void mouseClicked (MouseEvent e){
-                    super.mouseClicked(e);
-                    changePassword = ChangePassword.getInstance();
-                }
+            @Override
+            public void mouseClicked (MouseEvent e){
+                super.mouseClicked(e);
+                changePassword = ChangePassword.getInstance();
+            }
         };
     }
 
     private JPanel getSignupPanel() {
         Component[] components = {new JLabel("New Username"), newUserName = new JTextField(),
-                                  new JLabel("New Password"),
-        newPassword = new JPasswordField(),new JLabel("ConfirmPassword"), new JPasswordField()};
+                new JLabel("New Password"),
+                newPassword = new JPasswordField(),new JLabel("ConfirmPassword"), new JPasswordField()};
         JPanel p = new JPanel();
         Border padding = BorderFactory.createEmptyBorder(5,5,20,5);
         p.setLayout(new GridLayout(6,1,0,5));
@@ -153,12 +160,23 @@ public class AccountWindow extends JFrame {
             }
 
             if (user.equals(Admin.getUsername()) && pass.equals(Admin.getPassword())) {
-                Window.getInstance(Admin.getInstance()).start();
+                account = Admin.getInstance();
+                running = false;
+                Window.getInstance(account).start();
                 this.setVisible(false);
-                AccountWindow.clearInstance();
                 this.dispose();
             }
 
+        };
+    }
+
+    private ActionListener guestIn() {
+        return _ -> {
+            account = Guest.getInstance();
+            running = false;
+            Window.getInstance(account).start();
+            this.setVisible(false);
+            this.dispose();
         };
     }
 
@@ -174,15 +192,6 @@ public class AccountWindow extends JFrame {
         };
     }
 
-    private ActionListener guestIn() {
-        return _ -> {
-            Window.getInstance(Guest.getInstance()).start();
-            this.setVisible(false);
-            AccountWindow.clearInstance();
-            this.dispose();
-        };
-    }
-
     public static AccountWindow getInstance() {
         if(accountWindow == null)
             accountWindow = new AccountWindow();
@@ -190,8 +199,8 @@ public class AccountWindow extends JFrame {
         return accountWindow;
     }
 
-    public static void checkNull() throws NullPointerException{
-        if(accountWindow==null) throw new NullPointerException();
+    public static boolean isNull() {
+        return accountWindow==null;
     }
 
     public static void clearInstance() {
@@ -216,7 +225,7 @@ class ChangePassword extends JFrame {
     private JPanel mainPanel() {
         JPanel p = new JPanel();
         Component[] components = {new JLabel("Old Password"),oldPass = new JPasswordField(), new JLabel("New Password"),
-                                  newPass = new JPasswordField(), enter = new JButton("Enter")};
+                newPass = new JPasswordField(), enter = new JButton("Enter")};
 
         p.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         p.setLayout(new GridLayout(5,1,0,10));
@@ -250,4 +259,3 @@ class ChangePassword extends JFrame {
         changePassword=null;
     }
 }
-

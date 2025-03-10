@@ -38,7 +38,7 @@ interface MainPanels {
     CenterPanel centerPanel = new CenterPanel();
 }
 
-class MainPanel implements MainPanels {
+public class MainPanel implements MainPanels {
     final private JList<String> tempLeft, tempRight;
     final private DefaultListModel<String> modelLeft,modelRight;
     final private Stack<String> stackLeft, stackRight;
@@ -53,7 +53,20 @@ class MainPanel implements MainPanels {
         stackLeft = new Stack<>();
         stackRight = new Stack<>();
         allButton(account);
+    }
 
+    public JPanel getMain() {
+        JPanel main = new JPanel();
+        Border padding = BorderFactory.createEmptyBorder(0,5,0,5);
+        main.setBorder(padding);
+        main.setLayout(new BorderLayout());
+
+        main.add(getPanel(Panels.NORTH_PANEL),BorderLayout.NORTH);
+        main.add(getPanel(Panels.SOUTH_PANEL),BorderLayout.SOUTH);
+        main.add(getPanel(Panels.LEFT_PANEL),BorderLayout.WEST);
+        main.add(getPanel(Panels.RIGHT_PANEL),BorderLayout.EAST);
+        main.add(getPanel(Panels.CENTER_PANEL),BorderLayout.CENTER);
+        return main;
     }
 
     private void allButton(Accounts acc) {
@@ -69,6 +82,9 @@ class MainPanel implements MainPanels {
         }
 
         else if(acc instanceof Admin) {
+            for(JButton button: b) {
+                button.setEnabled(true);
+            }
             for (int i=0;i<4;i++)
                 b[i].addActionListener(events[i]);
         }
@@ -186,69 +202,6 @@ class MainPanel implements MainPanels {
                 System.out.println(s.getMessage());
             }
         };
-    }
-
-}
-
-//Window nga musdisplay output sa OS
-public class Window extends JFrame {
-    private static Accounts account;
-    private static Window window;
-
-
-    public void start() {
-        try {
-            Window.isNull();
-            AccountWindow.checkNull();
-            MainPanel main = new MainPanel(account);
-            this.setSize(800,550);
-            this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            this.setTitle("Automatic File Sorter");
-            this.setJMenuBar(new MenuBar());
-            this.add(getMain(main));
-            this.setContentPane(getMain(main));
-            this.setLocationRelativeTo(null);
-            this.setResizable(false);
-            this.setVisible(true);
-        } catch (NullPointerException e) {
-            Window.clearInstance();
-            Accounts.clearInstance();
-            AccountWindow.getInstance().start();
-        }
-    }
-
-
-    private JPanel getMain(MainPanel mainP) {
-        JPanel main = new JPanel();
-        Border padding = BorderFactory.createEmptyBorder(0,5,0,5);
-        setIconImage(new ImageIcon("src/res/icon.png").getImage());
-        main.setBorder(padding);
-        main.setLayout(new BorderLayout());
-
-        main.add(mainP.getPanel(Panels.NORTH_PANEL),BorderLayout.NORTH);
-        main.add(mainP.getPanel(Panels.SOUTH_PANEL),BorderLayout.SOUTH);
-        main.add(mainP.getPanel(Panels.LEFT_PANEL),BorderLayout.WEST);
-        main.add(mainP.getPanel(Panels.RIGHT_PANEL),BorderLayout.EAST);
-        main.add(mainP.getPanel(Panels.CENTER_PANEL),BorderLayout.CENTER);
-        return main;
-    }
-
-    public static Window getInstance(Accounts account) {
-
-        if(window == null) {
-            Window.account = account;
-            window = new Window();
-        }
-        return window;
-    }
-
-    public static void clearInstance() {
-        window = null;
-    }
-
-    public static void isNull() throws NullPointerException {
-        if(Window.window==null)
-            throw new NullPointerException();
     }
 
 }
@@ -498,7 +451,7 @@ class CenterPanel extends JPanel {
 class MenuBar extends JMenuBar {
     MenuBar() {
         JMenu[] menu = {getFileMenu(), new JMenu("Edit"),
-                new JMenu("View"), new JMenu("Window"), getHelp()};
+                new JMenu("View"), getAccount(), getHelp()};
 
         for(JMenu m: menu) add(m);
     }
@@ -517,6 +470,18 @@ class MenuBar extends JMenuBar {
         for(JMenuItem i: subItem) file.add(i);
 
         return file;
+    }
+
+    private JMenu getAccount() {
+        JMenu accountMenu = new JMenu("Account");
+        JMenuItem[] subItem = {new JMenuItem("Sign out")};
+        subItem[0].addActionListener(_->{
+            Window.clearInstance();
+            AccountWindow.clearInstance();
+            AccountWindow.getInstance().start();
+        });
+        for(JMenuItem i: subItem) accountMenu.add(i);
+        return accountMenu;
     }
 
     private JMenu getHelp() {
